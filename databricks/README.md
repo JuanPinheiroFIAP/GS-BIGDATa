@@ -10,6 +10,7 @@ Para importar: *Workspace > Import* e escolha cada arquivo (o Databricks reconhe
 | 2 | `02_prata.sql` | tipos, nulos e inválidos, regras de qualidade com contagem, `MERGE` pela chave |
 | 3 | `03_ouro.sql` | fato e dimensões, LGPD (hash e máscara), tabela do MVP |
 | 4 | `04_consultas.sql` | as 5 consultas, uma delas de impacto |
+| 5 | `05_evidencias.sql` | consultas curtas (uma tela cada) para os prints: linhas por tabela, regras de qualidade, LGPD e tabela do MVP |
 
 ## Passo a passo
 
@@ -79,4 +80,8 @@ docker build -t gs-sparktest databricks/teste_local
 docker run --rm -v "$PWD/chegada:/data:ro" -v "$PWD/databricks:/work/databricks:ro" -v "$PWD/databricks/teste_local:/harness:ro" gs-sparktest python /harness/rodar.py incremental
 ```
 
-**Não testado no Databricks real:** o `01_bronze.py` (Auto Loader precisa do Volume) e o uso do widget no SQL (`:salt_lgpd`); no teste local o sal foi trocado por texto. Se algo falhar ao importar, o erro costuma ser de caminho do Volume ou de versão do runtime.
+**Também executado no Databricks Free Edition** (Serverless), com os dois lotes e a reexecução: Bronze 60/1830/6/60/111 depois do lote 1, 100/3050/10/100/184 depois do lote 2 e `novos = 0` na reexecução; Prata e Ouro com todas as células em sucesso e o widget `:salt_lgpd` funcionando no SQL. Os prints estão em [`../prints/`](../prints/).
+
+**Diferença entre o teste local e o Databricks:** o Auto Loader sem `inferColumnTypes` guarda objetos e listas do JSON como **texto**, e a Prata os lê com `from_json` (`entrance`, `features`, `tags`, `center`, `hourly`, `resultados`). O `teste_local/rodar.py` simula a Bronze em texto justamente para reproduzir isso.
+
+**Ao importar um notebook com nome que já existe**, o Databricks cria uma cópia com data e hora no nome (por exemplo `02_prata 2026-11-19 01:57:32`). Apague a antiga e renomeie a nova para não rodar a versão errada.
