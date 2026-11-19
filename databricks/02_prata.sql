@@ -53,15 +53,16 @@ WITH base AS (
     neighborhood AS bairro,
     try_cast(lat AS DOUBLE) AS latitude,
     try_cast(lng AS DOUBLE) AS longitude,
-    features AS recursos,
+    from_json(features, 'array<string>') AS recursos,
     try_cast(photoVerifications AS INT) AS fotos_verificadas,
-    try_cast(entrance.steps AS INT) AS degraus_entrada,
-    try_cast(entrance.doorWidthCm AS INT) AS largura_porta_cm,
+    try_cast(ent.steps AS INT) AS degraus_entrada,
+    try_cast(ent.doorWidthCm AS INT) AS largura_porta_cm,
     discount AS desconto,
     to_date(regexp_extract(arquivo_origem, '_([0-9]{4}-[0-9]{2}-[0-9]{2})[.]jsonl', 1)) AS data_coleta,
     arquivo_origem,
     row_number() OVER (PARTITION BY id ORDER BY arquivo_origem DESC) AS rn
-  FROM workspace.gs.bronze_lugares
+  -- Na Bronze (Auto Loader) objetos e listas do JSON ficam como texto: from_json devolve a estrutura.
+  FROM (SELECT *, from_json(entrance, 'steps STRING, doorWidthCm STRING') AS ent FROM workspace.gs.bronze_lugares)
 )
 SELECT *,
   (lugar_id IS NULL OR trim(lugar_id) = '') AS f_id_ausente,
@@ -244,12 +245,13 @@ WITH base AS (
     END AS categoria,
     coalesce(t['amenity'], t['tourism'], t['shop'], t['leisure']) AS subtipo,
     lower(trim(t['wheelchair'])) AS cadeira_rodas,
-    coalesce(try_cast(lat AS DOUBLE), try_cast(center.lat AS DOUBLE)) AS latitude,
-    coalesce(try_cast(lon AS DOUBLE), try_cast(center.lon AS DOUBLE)) AS longitude,
+    coalesce(try_cast(lat AS DOUBLE), try_cast(c.lat AS DOUBLE)) AS latitude,
+    coalesce(try_cast(lon AS DOUBLE), try_cast(c.lon AS DOUBLE)) AS longitude,
     to_date(regexp_extract(arquivo_origem, '_([0-9]{4}-[0-9]{2}-[0-9]{2})[.]jsonl', 1)) AS data_coleta,
     arquivo_origem,
     row_number() OVER (PARTITION BY type, id ORDER BY arquivo_origem DESC) AS rn
-  FROM (SELECT *, from_json(to_json(tags), 'map<string,string>') AS t FROM workspace.gs.bronze_osm)
+  FROM (SELECT *, from_json(tags, 'map<string,string>') AS t, from_json(center, 'lat STRING, lon STRING') AS c
+        FROM workspace.gs.bronze_osm)
 )
 SELECT *,
   (latitude IS NULL OR longitude IS NULL) AS f_sem_coordenada,
@@ -303,8 +305,9 @@ CREATE TABLE IF NOT EXISTS workspace.gs.prata_clima (
 CREATE OR REPLACE TEMP VIEW rot_clima AS
 WITH horas AS (
   SELECT lugar_id, arquivo_origem,
-         explode(arrays_zip(hourly.time, hourly.temperature_2m, hourly.precipitation)) AS z
-  FROM workspace.gs.bronze_clima
+         explode(arrays_zip(h.time, h.temperature_2m, h.precipitation)) AS z
+  FROM (SELECT *, from_json(hourly, 'time array<string>, temperature_2m array<string>, precipitation array<string>') AS h
+        FROM workspace.gs.bronze_clima)
 ),
 base AS (
   SELECT
@@ -329,7 +332,7 @@ WHERE rn = 1;
 INSERT INTO workspace.gs.prata_qualidade
 SELECT current_timestamp(), 'prata_clima', regra, acao, registros FROM (
   SELECT 'duplicado_removido' AS regra, 'removido' AS acao,
-         (SELECT sum(size(hourly.time)) FROM workspace.gs.bronze_clima) - count(*) AS registros FROM rot_clima
+         (SELECT sum(size(from_json(hourly, 'time array<string>').time)) FROM workspace.gs.bronze_clima) - count(*) AS registros FROM rot_clima
   UNION ALL SELECT 'temperatura_nula', 'barrado', count_if(f_temperatura_nula) FROM rot_clima
   UNION ALL SELECT 'temperatura_fora_da_faixa', 'barrado', count_if(f_temperatura_fora_da_faixa) FROM rot_clima
   UNION ALL SELECT 'chuva_invalida', 'barrado', count_if(f_chuva_invalida) FROM rot_clima
@@ -373,13 +376,16 @@ CREATE TABLE IF NOT EXISTS workspace.gs.prata_ibge_pcd (
 
 CREATE OR REPLACE TEMP VIEW rot_ibge AS
 WITH linhas AS (
-  SELECT id AS variavel_id, variavel, arquivo_origem, explode(resultados) AS r FROM workspace.gs.bronze_ibge
+  SELECT id AS variavel_id, variavel, arquivo_origem,
+         explode(from_json(resultados,
+           'array<struct<classificacoes:array<struct<categoria:map<string,string>>>,series:array<struct<localidade:struct<id:string>,serie:map<string,string>>>>>')) AS r
+  FROM workspace.gs.bronze_ibge
 ),
 mapas AS (
   SELECT variavel_id, variavel, arquivo_origem,
          r.series[0].localidade.id AS municipio_id,
-         from_json(to_json(r.classificacoes[0].categoria), 'map<string,string>') AS cat,
-         from_json(to_json(r.series[0].serie), 'map<string,string>') AS serie
+         r.classificacoes[0].categoria AS cat,
+         r.series[0].serie AS serie
   FROM linhas
 ),
 base AS (
@@ -411,7 +417,7 @@ WHERE rn = 1;
 INSERT INTO workspace.gs.prata_qualidade
 SELECT current_timestamp(), 'prata_ibge_pcd', regra, acao, registros FROM (
   SELECT 'duplicado_removido' AS regra, 'removido' AS acao,
-         (SELECT sum(size(resultados)) FROM workspace.gs.bronze_ibge) - count(*) AS registros FROM rot_ibge
+         (SELECT sum(size(from_json(resultados, 'array<string>'))) FROM workspace.gs.bronze_ibge) - count(*) AS registros FROM rot_ibge
   UNION ALL SELECT 'pessoas_nulo_ou_negativo', 'barrado', count_if(f_pessoas_invalido) FROM rot_ibge
   UNION ALL SELECT 'periodo_invalido', 'barrado', count_if(f_periodo_invalido) FROM rot_ibge
   UNION ALL SELECT 'categoria_desconhecida', 'barrado', count_if(f_categoria_desconhecida) FROM rot_ibge

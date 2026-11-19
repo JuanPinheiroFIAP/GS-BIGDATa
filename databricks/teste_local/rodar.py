@@ -26,8 +26,12 @@ SAL = "'sal-de-teste-123'"
 def bronze(datas):
     for fonte, tabela in FONTES.items():
         caminhos = [f"/data/{fonte}/{fonte}_{d}.jsonl" for d in datas]
-        df = (spark.read.option("primitivesAsString", "true").json(caminhos)
-              .withColumn("arquivo_origem", F.input_file_name())
+        # Imita o Auto Loader sem inferColumnTypes: toda coluna do topo vira STRING e objetos/listas
+        # ficam como texto JSON (por isso a Prata usa from_json).
+        bruto = spark.read.text(caminhos).withColumn("arquivo_origem", F.input_file_name())
+        mapa = bruto.select("arquivo_origem", F.from_json("value", "map<string,string>").alias("m"))
+        chaves = sorted(r[0] for r in mapa.select(F.explode(F.map_keys("m")).alias("k")).distinct().collect())
+        df = (mapa.select(*[F.col("m")[k].alias(k) for k in chaves], "arquivo_origem")
               .withColumn("carregado_em", F.current_timestamp()))
         df.write.format("delta").mode("append").saveAsTable(f"gs.{tabela}")
 
