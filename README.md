@@ -14,7 +14,10 @@ os prints estão na pasta [`prints/`](prints/), organizados por etapa.
 
 | Nome completo | RM |
 | --- | --- |
-| _preencher_ | _preencher_ |
+| Kaiky Alvaro de Miranda | RM98118 |
+| Juan Pinheiro de França | RM552202 |
+| Bruno Eduardo Caputo Paulino | RM558303 |
+| Lucas Rodrigues da Silva | RM98344 |
 
 ## Arquitetura
 
@@ -153,6 +156,10 @@ No lote 2 entraram só os registros novos (40, 1.220, 4, 40 e 73). Na reexecuç�
 | Lote 1 | Lote 2 | Reexecução (novos = 0) |
 | --- | --- | --- |
 | ![Lote 1](prints/03_bronze/03a_bronze_lote1_controle_carga_antes_depois.jpg) | ![Lote 2](prints/03_bronze/03c_bronze_lote2_controle_carga_antes_depois.jpg) | ![Reexecução](prints/03_bronze/03d_bronze_reexecucao_sem_arquivo_novo_novos_zero.jpg) |
+
+![Código do Auto Loader (cloudFiles)](prints/03_bronze/03e_bronze_codigo_autoloader_cloudfiles.jpg)
+
+*Leitura com `cloudFiles`, checkpoint por fonte e `availableNow`: processa o que é novo e termina.*
 
 ![Linhas por arquivo no lote 1](prints/03_bronze/03b_bronze_lote1_contagem_por_arquivo.jpg)
 
@@ -313,7 +320,6 @@ e o teste local passou a simular a Bronze em texto para não esconder o problema
 
 ## O que ainda falta
 
-1. Preencher nome completo e RM dos integrantes (aqui e no relatório).
-2. Mostrar no MVP a tabela da Ouro que ele consome (`ouro_mvp_nota_lugar`): exportar como JSON e usar no lugar de `PLACES`.
-3. Print da tela *Admin > Variables* do Airflow, depois de criar `WEBHOOK_NOTIFICACAO_SECRET` com um webhook de teste (isso também gera o print da notificação).
-4. Preencher o relatório em [`relatorio/`](relatorio/) com estes prints, exportar para PDF com o link deste repositório e enviar pelo Teams até 19/11/2026, 23h55.
+1. Mostrar no MVP a tabela da Ouro que ele consome (`ouro_mvp_nota_lugar`): exportar como JSON e usar no lugar de `PLACES`.
+2. Print da tela *Admin > Variables* do Airflow, depois de criar `WEBHOOK_NOTIFICACAO_SECRET` com um webhook de teste (isso também gera o print da notificação).
+3. Conferir o relatório em [`relatorio/`](relatorio/), exportar para PDF com o link deste repositório e enviar pelo Teams até 19/11/2026, 23h55.
