@@ -264,7 +264,7 @@ O SQL completo está em [`06f_consulta5_impacto_sql.jpg`](prints/06_consultas/06
 | 06 | Prata com tipos, nulos, MERGE e 3+ regras com contagem | `prints/04_prata`, [`02_prata.sql`](databricks/02_prata.sql) |
 | 07 | Ouro com 1 fato, 2+ dimensões e 5 consultas (1 de impacto) | `prints/05_ouro`, `prints/06_consultas` |
 | 08 | LGPD (hash e máscara) | `prints/05_ouro/05b` e `05c` |
-| 09 | MVP com tabela da Ouro e README | `prints/05_ouro/05d`, este arquivo |
+| 09 | MVP com tabela da Ouro e README | `prints/05_ouro/05d`, `prints/07_github`, este arquivo |
 
 ## Como reproduzir
 
