@@ -1,0 +1,15 @@
+# Segredos: nunca commitar
+.env
+
+# Arquivos coletados (ficam só na máquina; amostras/ guarda um pouco de cada fonte)
+chegada/*
+!chegada/.gitkeep
+
+logs/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Lotes para subir ao Databricks (gerados por scripts/preparar_lotes.py)
+lotes/

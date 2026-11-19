@@ -1,0 +1,2 @@
+# Dependências extras da imagem do Airflow (requests e o resto já vêm na imagem base).
+json5          # lê o places.js do Inclui+ (objeto JavaScript, não JSON puro)
