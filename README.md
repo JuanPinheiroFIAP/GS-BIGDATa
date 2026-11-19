@@ -209,6 +209,13 @@ um agregado de cobertura do OSM e a tabela que o MVP consome, `ouro_mvp_nota_lug
 
 *`ouro_mvp_nota_lugar`: uma linha por lugar e necessidade. O cartão de lugar do Inclui+ lê essa tabela no lugar do `places.js`.*
 
+**MVP no ar:** <https://d3ls3zp8wqbtsw.cloudfront.net/>
+
+![Tela do MVP Inclui+](prints/08_mvp/08a_mvp_inclui_tela_inicial.jpg)
+
+*Tela inicial do MVP: o ranking de lugares muda conforme a necessidade escolhida (mobilidade, visão, audição ou cognição). Hoje o site lê o catálogo `places.js`;
+a tabela `ouro_mvp_nota_lugar` entrega a mesma estrutura (nota, relatos e barreiras por lugar e necessidade) para substituí-lo.*
+
 ## 6. As cinco consultas SQL
 
 Todas leem a Ouro ([`04_consultas.sql`](databricks/04_consultas.sql)). Os relatos são **simulados**: as leituras abaixo ilustram o que o pipeline entrega, não são conclusões sobre a cidade.
